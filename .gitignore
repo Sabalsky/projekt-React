@@ -11,3 +11,6 @@ backend/logs/
 # Konfiguracja lokalna
 .env
 *.log
+
+# skrypt pomocniczy do generowania PDF
+make_doc.py
