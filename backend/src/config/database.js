@@ -4,17 +4,12 @@ import path from 'node:path';
 import { config } from './env.js';
 import { logger } from './logger.js';
 
-/**
- * Warstwa dostepu do bazy SQLite (trwale przechowywanie danych).
- * Uzywamy wbudowanego modulu node:sqlite (Node >= 22.5) - brak natywnych zaleznosci.
- */
+// Obsluga bazy SQLite. Korzystam z wbudowanego node:sqlite, zeby nie instalowac
+// dodatkowych paczek (dziala od Node 22.5).
 
 let db;
 
-/**
- * Tworzy polaczenie z baza i inicjalizuje schemat (tabele + relacje).
- * @param {string} [dbFile] - sciezka do pliku bazy; ":memory:" dla testow.
- */
+// laczy sie z baza i zaklada tabele jak ich nie ma. dbFile = ':memory:' uzywam w testach
 export function initDatabase(dbFile = config.dbFile) {
   if (dbFile !== ':memory:') {
     const dir = path.dirname(dbFile);
@@ -30,20 +25,14 @@ export function initDatabase(dbFile = config.dbFile) {
   return db;
 }
 
-/**
- * Zwraca aktywne polaczenie z baza.
- * @returns {DatabaseSync}
- */
 export function getDb() {
   if (!db) {
-    throw new Error('Baza danych nie zostala zainicjalizowana. Wywolaj initDatabase() najpierw.');
+    throw new Error('Baza nie jest zainicjalizowana - najpierw initDatabase()');
   }
   return db;
 }
 
-/**
- * Zamyka polaczenie (uzywane w testach i przy zamykaniu aplikacji).
- */
+// zamykam polaczenie - przydaje sie w testach
 export function closeDatabase() {
   if (db) {
     db.close();

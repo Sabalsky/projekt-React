@@ -5,7 +5,7 @@ import { useAuth } from '../auth.jsx';
 
 const STATUS_LABEL = { active: 'Aktywna', ended: 'Zakończona', scheduled: 'Zaplanowana' };
 
-/** Szczegoly aukcji + historia ofert + formularz licytacji. */
+// widok jednej aukcji - szczegoly, formularz licytacji i historia ofert
 export default function AuctionDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();

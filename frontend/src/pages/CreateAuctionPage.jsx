@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 
-/** Formularz wystawienia przedmiotu na aukcje. */
+// formularz dodawania nowej aukcji
 export default function CreateAuctionPage() {
   const navigate = useNavigate();
   const now = new Date();

@@ -5,13 +5,9 @@ import { toBidDto } from '../dto/index.js';
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../config/logger.js';
 
-/**
- * Logika licytacji - serce regul biznesowych systemu:
- *  - oferta musi byc wyzsza niz aktualna cena,
- *  - nie mozna licytowac przed startem ani po zakonczeniu aukcji,
- *  - wlasciciel nie moze licytowac wlasnej aukcji,
- *  - kazda oferta trafia do historii.
- */
+// najwazniejsza logika w calym projekcie - licytacja.
+// tutaj sprawdzam wszystkie reguly: oferta wyzsza od aktualnej, aukcja musi trwac,
+// nie mozna licytowac swojej aukcji, a kazda oferta laduje w historii
 export const bidService = {
   placeBid(auctionId, amount, bidderId) {
     const auction = auctionService.getRawOrThrow(auctionId);

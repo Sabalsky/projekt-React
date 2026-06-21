@@ -1,10 +1,8 @@
 import { authService } from '../services/authService.js';
 import { AppError } from '../utils/AppError.js';
 
-/**
- * Middleware autoryzacji JWT. Oczekuje naglowka: Authorization: Bearer <token>.
- * Po sukcesie dokleja req.user = { id, username }.
- */
+// sprawdza token JWT z naglowka "Authorization: Bearer ...".
+// jak jest ok, to dokleja dane usera do req.user, zeby kontroler wiedzial kto to
 export function authenticate(req, _res, next) {
   const header = req.headers.authorization || '';
   const [scheme, token] = header.split(' ');

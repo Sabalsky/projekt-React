@@ -1,9 +1,7 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import { api } from './api.js';
 
-/**
- * Kontekst uwierzytelniania - przechowuje JWT i dane uzytkownika w localStorage.
- */
+// trzyma zalogowanego usera i token w localStorage, zeby nie wylogowywalo po odswiezeniu
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {

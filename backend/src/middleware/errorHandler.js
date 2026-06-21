@@ -1,17 +1,12 @@
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../config/logger.js';
 
-/**
- * Obsluga nieznanych tras - zwraca 404 w jednolitym formacie.
- */
+// jak ktos trafi na nieistniejaca sciezke -> 404
 export function notFoundHandler(req, _res, next) {
   next(AppError.notFound(`Nie znaleziono trasy: ${req.method} ${req.originalUrl}`));
 }
 
-/**
- * Globalny error handler - jedyne miejsce budujace odpowiedz bledu.
- * Mapuje AppError na kod HTTP; nieoczekiwane bledy -> 500.
- */
+// wszystkie bledy lapie tutaj. AppError ma swoj kod, reszta to 500.
 // eslint-disable-next-line no-unused-vars
 export function errorHandler(err, req, res, _next) {
   if (err instanceof AppError) {
@@ -23,7 +18,7 @@ export function errorHandler(err, req, res, _next) {
     });
   }
 
-  // Naruszenie unikalnosci w SQLite
+  // zlapanie duplikatu (np. dwa razy ten sam email) zeby nie bylo 500
   if (err && typeof err.message === 'string' && err.message.includes('UNIQUE constraint')) {
     return res.status(409).json({ error: { message: 'Naruszenie unikalnosci danych' } });
   }

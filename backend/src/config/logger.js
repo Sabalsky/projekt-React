@@ -1,10 +1,7 @@
 import winston from 'winston';
 import { config } from './env.js';
 
-/**
- * Logger oparty na winston - loguje operacje systemu (wymaganie dodatkowe).
- * W konsoli format czytelny dla czlowieka, dodatkowo zapis bledow do pliku.
- */
+// logowanie operacji przez winston - w konsoli i do pliku
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 
 const consoleFormat = printf(({ level, message, timestamp: ts, stack }) => {

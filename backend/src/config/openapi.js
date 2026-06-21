@@ -1,7 +1,5 @@
-/**
- * Specyfikacja OpenAPI 3.0 serwowana przez Swagger UI pod /api-docs.
- * Stanowi dokumentacje API (wymaganie techniczne) oraz klienta testowego.
- */
+// opis API w formacie OpenAPI - z tego Swagger robi strone /api-docs,
+// gdzie da sie od razu wyklikac endpointy
 export const openapiSpec = {
   openapi: '3.0.3',
   info: {

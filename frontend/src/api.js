@@ -1,8 +1,5 @@
-/**
- * Cienki klient REST API. Frontend komunikuje sie z systemem WYLACZNIE przez te warstwe
- * (zgodnie z wymaganiem: brak bezposredniego dostepu do bazy danych).
- * W dev zapytania ida na /api/* i sa proxowane przez Vite na backend :3000.
- */
+// caly kontakt z backendem przechodzi przez ten plik - front nie gada z baza bezposrednio.
+// w trybie dev /api/* jest przekierowywane przez Vite na backend (port 3000)
 const BASE = '/api';
 
 function getToken() {

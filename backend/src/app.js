@@ -12,17 +12,15 @@ import userRoutes from './routes/userRoutes.js';
 import auctionRoutes from './routes/auctionRoutes.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 
-/**
- * Tworzy i konfiguruje aplikacje Express (bez uruchamiania nasluchu).
- * Wydzielone od server.js, dzieki czemu testy moga importowac samo `app`.
- */
+// konfiguracja Expressa. wydzielilem to od server.js, zeby testy mogly
+// importowac samo app bez odpalania serwera na porcie
 export function createApp() {
   const app = express();
 
   app.use(cors({ origin: config.corsOrigin }));
   app.use(express.json());
 
-  // Logowanie zadan HTTP przez winston (wymaganie: logowanie operacji)
+  // logowanie kazdego zapytania HTTP do logow
   app.use(
     morgan('tiny', {
       stream: { write: (msg) => logger.http(msg.trim()) },
@@ -33,16 +31,16 @@ export function createApp() {
   // Healthcheck
   app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
-  // Dokumentacja API
+  // Swagger
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
   app.get('/openapi.json', (_req, res) => res.json(openapiSpec));
 
-  // Zasoby
+  // trasy
   app.use('/auth', authRoutes);
   app.use('/users', userRoutes);
   app.use('/auctions', auctionRoutes);
 
-  // Obsluga bledow (na koncu lancucha)
+  // to musi byc na samym koncu - obsluga bledow i nieznanych tras
   app.use(notFoundHandler);
   app.use(errorHandler);
 

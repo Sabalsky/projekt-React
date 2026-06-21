@@ -3,9 +3,7 @@ import { toAuctionDto } from '../dto/index.js';
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../config/logger.js';
 
-/**
- * Logika biznesowa aukcji: tworzenie, edycja, usuwanie, listowanie z filtrami.
- */
+// obsluga aukcji - dodawanie, edycja, usuwanie i lista z filtrami
 export const auctionService = {
   create(data, ownerId) {
     if (new Date(data.endDate) <= new Date(data.startDate)) {
@@ -22,7 +20,7 @@ export const auctionService = {
     return toAuctionDto(auction);
   },
 
-  /** Zwraca surowy rekord (uzywane wewnetrznie przez bidService). */
+  // surowy rekord z bazy - potrzebny w bidService do sprawdzania dat i wlasciciela
   getRawOrThrow(id) {
     const auction = auctionRepository.findById(id);
     if (!auction) throw AppError.notFound('Aukcja nie zostala znaleziona');

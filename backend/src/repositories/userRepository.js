@@ -1,9 +1,7 @@
 import { getDb } from '../config/database.js';
 
-/**
- * Repozytorium uzytkownikow - jedyne miejsce z zapytaniami SQL o tabele users.
- * Zwraca surowe rekordy (snake_case); mapowanie na DTO robi warstwa wyzej.
- */
+// wszystkie zapytania o uzytkownikow trzymam tutaj.
+// zwracam surowy rekord z bazy, zamiana na DTO jest pietro wyzej
 export const userRepository = {
   create({ username, email, passwordHash }) {
     const stmt = getDb().prepare(

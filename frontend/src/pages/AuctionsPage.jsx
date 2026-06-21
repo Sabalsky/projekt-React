@@ -4,7 +4,7 @@ import { api } from '../api.js';
 
 const STATUS_LABEL = { active: 'Aktywna', ended: 'Zakończona', scheduled: 'Zaplanowana' };
 
-/** Lista aukcji z filtrowaniem, sortowaniem i paginacja. */
+// strona glowna - lista aukcji z filtrami i stronicowaniem
 export default function AuctionsPage() {
   const [data, setData] = useState({ items: [], total: 0, page: 1, totalPages: 1 });
   const [filters, setFilters] = useState({ category: '', status: '', sortBy: 'created_at', order: 'desc' });

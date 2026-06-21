@@ -1,9 +1,7 @@
 import { getDb } from '../config/database.js';
 
-/**
- * Repozytorium aukcji. Obsluguje dynamiczne filtrowanie, sortowanie i paginacje.
- * Sortowanie jest ograniczone do whitelisty kolumn (ochrona przed SQL injection).
- */
+// zapytania SQL do tabeli auctions.
+// kolumny do sortowania trzymam na sztywno tutaj, zeby nie dalo sie wstrzyknac czegos do ORDER BY
 const SORTABLE = {
   created_at: 'created_at',
   end_date: 'end_date',
@@ -35,10 +33,8 @@ export const auctionRepository = {
     return getDb().prepare(`SELECT * FROM auctions WHERE id = ?`).get(id);
   },
 
-  /**
-   * Lista aukcji z filtrowaniem (kategoria/status), sortowaniem i paginacja.
-   * Status wyliczany dynamicznie wzgledem aktualnej daty (now).
-   */
+  // lista aukcji z filtrami (kategoria, status), sortowaniem i paginacja.
+  // status nie jest w bazie, wiec licze go datami wzgledem 'now'
   findAll({ category, status, sortBy, order, limit, offset }) {
     const where = [];
     const params = [];
@@ -92,7 +88,7 @@ export const auctionRepository = {
     return this.findById(id);
   },
 
-  /** Aktualizuje aktualna najwyzsza oferte aukcji. */
+  // podbicie aktualnej ceny po nowej ofercie
   updateCurrentPrice(id, amount) {
     getDb().prepare(`UPDATE auctions SET current_price = ? WHERE id = ?`).run(amount, id);
     return this.findById(id);

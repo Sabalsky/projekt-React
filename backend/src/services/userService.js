@@ -3,9 +3,7 @@ import { toUserDto } from '../dto/index.js';
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../config/logger.js';
 
-/**
- * Logika biznesowa zarzadzania uzytkownikami (CRUD).
- */
+// operacje na uzytkownikach (CRUD)
 export const userService = {
   getById(id) {
     const user = userRepository.findById(id);

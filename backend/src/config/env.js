@@ -2,10 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-/**
- * Centralna konfiguracja aplikacji czytana ze zmiennych srodowiskowych.
- * Dzieki temu reszta kodu nie odwoluje sie bezposrednio do process.env.
- */
+// wszystkie ustawienia w jednym miejscu, zeby nie grzebac po process.env po calym kodzie
 export const config = {
   port: Number(process.env.PORT) || 3000,
   jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-me',

@@ -1,8 +1,6 @@
 import { getDb } from '../config/database.js';
 
-/**
- * Repozytorium ofert (licytacji). Przechowuje pelna historie ofert dla aukcji.
- */
+// zapytania o oferty - tutaj trzymana jest cala historia licytacji
 export const bidRepository = {
   create({ auctionId, bidderId, amount }) {
     const stmt = getDb().prepare(
@@ -16,7 +14,7 @@ export const bidRepository = {
     return getDb().prepare(`SELECT * FROM bids WHERE id = ?`).get(id);
   },
 
-  /** Historia ofert aukcji (z nazwa licytujacego), od najnowszej. */
+  // historia ofert danej aukcji, dorzucam nazwe licytujacego (JOIN), od najwyzszej kwoty
   findByAuction(auctionId) {
     return getDb()
       .prepare(
@@ -29,7 +27,7 @@ export const bidRepository = {
       .all(auctionId);
   },
 
-  /** Najwyzsza oferta aukcji (lub undefined gdy brak ofert). */
+  // najwyzsza oferta (albo undefined jak nikt jeszcze nie licytowal)
   findHighest(auctionId) {
     return getDb()
       .prepare(`SELECT * FROM bids WHERE auction_id = ? ORDER BY amount DESC LIMIT 1`)

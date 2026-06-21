@@ -28,7 +28,7 @@ function NavBar() {
   );
 }
 
-/** Trasa chroniona - przekierowuje do logowania, gdy brak uzytkownika. */
+// jak ktos nie jest zalogowany, to wywalam go na logowanie
 function RequireAuth({ children }) {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" replace />;

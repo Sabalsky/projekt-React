@@ -1,13 +1,6 @@
-/**
- * Wyjatek aplikacyjny niosacy kod HTTP - pozwala warstwie serwisowej
- * sygnalizowac bledy biznesowe, ktore globalny errorHandler mapuje na odpowiedz.
- */
+// wlasny blad z kodem HTTP - serwisy rzucaja nim przy bledach biznesowych,
+// a errorHandler na koncu zamienia go na odpowiedz JSON
 export class AppError extends Error {
-  /**
-   * @param {number} statusCode - kod HTTP (np. 400, 404, 409)
-   * @param {string} message - komunikat dla klienta
-   * @param {object} [details] - dodatkowe szczegoly (np. bledy walidacji)
-   */
   constructor(statusCode, message, details = undefined) {
     super(message);
     this.statusCode = statusCode;

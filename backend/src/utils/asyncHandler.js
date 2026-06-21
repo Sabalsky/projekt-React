@@ -1,7 +1,4 @@
-/**
- * Owija handler kontrolera tak, by wyjatki (rowniez z await)
- * trafialy do next() i globalnego errorHandlera - bez powtarzania try/catch.
- * @param {Function} fn
- */
+// dzieki temu nie musze pisac try/catch w kazdym kontrolerze -
+// blad z asynca leci do next() i lapie go errorHandler
 export const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);

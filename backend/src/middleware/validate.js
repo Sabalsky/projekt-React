@@ -1,10 +1,8 @@
 import { validationResult } from 'express-validator';
 import { AppError } from '../utils/AppError.js';
 
-/**
- * Middleware uruchamiany po lancuchu regul express-validator.
- * Zbiera bledy walidacji i zwraca 400 z czytelnymi szczegolami.
- */
+// leci po regulach express-validatora. jak cos sie nie zgadza,
+// zbiera bledy i zwraca 400 z lista co jest nie tak
 export function validate(req, _res, next) {
   const result = validationResult(req);
   if (result.isEmpty()) return next();

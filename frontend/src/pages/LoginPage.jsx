@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 
-/** Logowanie i rejestracja w jednym widoku (przelacznik trybu). */
+// logowanie i rejestracja na jednej stronie - przelaczane guzikiem
 export default function LoginPage() {
   const { login, register } = useAuth();
   const navigate = useNavigate();

@@ -4,15 +4,13 @@ import { auctionService } from './services/auctionService.js';
 import { bidService } from './services/bidService.js';
 import { logger } from './config/logger.js';
 
-/**
- * Skrypt wypelniajacy baze przykladowymi danymi (uzytkownicy, aukcje, oferty).
- * Uruchom: npm run seed
- */
+// wrzuca do bazy przykladowych userow, aukcje i oferty zeby bylo na czym testowac.
+// odpalam przez: npm run seed
 async function seed() {
   initDatabase();
   const db = getDb();
 
-  // Czyszczenie istniejacych danych
+  // najpierw czyszcze co bylo
   db.exec('DELETE FROM bids; DELETE FROM auctions; DELETE FROM users;');
 
   const alice = await authService.register({ username: 'alice', email: 'alice@example.com', password: 'haslo123' });
@@ -36,7 +34,7 @@ async function seed() {
     alice.user.id
   );
 
-  // Kilka ofert na aktywne aukcje
+  // pare ofert na aktywnych aukcjach
   bidService.placeBid(a1.id, 550, bob.user.id);
   bidService.placeBid(a1.id, 600, carol.user.id);
   bidService.placeBid(a2.id, 2600, alice.user.id);

@@ -1,8 +1,5 @@
-/**
- * DTO (Data Transfer Objects) - mapuja surowe rekordy z bazy (snake_case)
- * na ksztalt zwracany przez API (camelCase). Gwarantuja, ze wrazliwe pola
- * (np. password_hash) nigdy nie trafiaja do odpowiedzi.
- */
+// DTO - zamieniam rekord z bazy (snake_case) na to co idzie do API (camelCase).
+// Przy okazji dzieki temu hasla (password_hash) nigdy nie wychodza na zewnatrz.
 
 export function toUserDto(row) {
   if (!row) return null;

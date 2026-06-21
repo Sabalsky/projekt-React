@@ -8,9 +8,7 @@ import { logger } from '../config/logger.js';
 
 const SALT_ROUNDS = 10;
 
-/**
- * Logika uwierzytelniania: rejestracja, logowanie, wydawanie tokenow JWT.
- */
+// rejestracja, logowanie i wydawanie tokenow JWT
 export const authService = {
   async register({ username, email, password }) {
     if (userRepository.findByEmail(email)) {
