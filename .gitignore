@@ -1,0 +1,13 @@
+# Zależności
+node_modules/
+
+# Build frontendu
+frontend/dist/
+
+# Dane i logi backendu
+backend/data/
+backend/logs/
+
+# Konfiguracja lokalna
+.env
+*.log

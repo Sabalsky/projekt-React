@@ -1,0 +1,21 @@
+services:
+  api:
+    build: .
+    container_name: auction-api
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - JWT_SECRET=zmien-ten-sekret-w-produkcji
+      - JWT_EXPIRES_IN=2h
+      - DB_FILE=/app/data/auction.db
+      - LOG_LEVEL=info
+      - CORS_ORIGIN=http://localhost:5173
+    volumes:
+      - auction-data:/app/data
+      - auction-logs:/app/logs
+    restart: unless-stopped
+
+volumes:
+  auction-data:
+  auction-logs:
