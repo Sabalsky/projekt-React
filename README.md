@@ -69,21 +69,40 @@ na podstawie dat i aktualnego czasu.
 
 ## Jak uruchomić
 
-Potrzebny Node w wersji co najmniej 22 (przez `node:sqlite`).
+### Czego potrzeba
 
-Backend:
+- **Node.js w wersji co najmniej 22** (korzystam z wbudowanego modułu `node:sqlite`).
+  Sprawdzenie wersji: `node -v`. Jak masz starszy, pobierz nowy z https://nodejs.org.
+- npm (instaluje się razem z Node).
+- Bazy danych nie trzeba instalować – SQLite siedzi w pliku, tworzy się sam przy starcie.
+
+Aplikacja to dwie osobne części (backend i frontend), więc trzeba **otworzyć dwa terminale
+i mieć oba uruchomione naraz**.
+
+### Krok 1 – sklonuj repozytorium
+
+```bash
+git clone https://github.com/Sabalsky/projekt-React.git
+cd projekt-React
+```
+
+### Krok 2 – backend (pierwszy terminal)
 
 ```bash
 cd backend
-copy .env.example .env       # na Windowsie; na Linux/Mac: cp .env.example .env
 npm install
-npm run seed                 # opcjonalnie – wrzuca przykładowe aukcje i konta
+npm run seed     # wrzuca przykładowe aukcje i konta testowe (zalecane przy pierwszym razie)
 npm start
 ```
 
-Backend stoi na http://localhost:3000, Swagger pod http://localhost:3000/api-docs.
+Backend działa na **http://localhost:3000**, dokumentacja Swagger na
+**http://localhost:3000/api-docs**. Ten terminal zostaw otwarty.
 
-Frontend (w drugim oknie terminala):
+> Uwaga: jak `npm start` zgłosi brak pliku `.env`, skopiuj przykładowy:
+> `copy .env.example .env` (Windows) lub `cp .env.example .env` (Linux/Mac).
+> Domyślne ustawienia działają od ręki, więc nic nie trzeba zmieniać.
+
+### Krok 3 – frontend (drugi terminal)
 
 ```bash
 cd frontend
@@ -91,18 +110,26 @@ npm install
 npm run dev
 ```
 
-Frontend stoi na http://localhost:5173. Vite przekierowuje zapytania z `/api` na backend,
-więc nie trzeba kombinować z CORS-em.
+### Krok 4 – otwórz w przeglądarce
 
-Można też odpalić sam backend w Dockerze:
+Wejdź na **http://localhost:5173** – to jest aplikacja. Frontend sam łączy się z backendem
+(Vite przekierowuje zapytania `/api` na port 3000, więc CORS nie przeszkadza).
+
+Zaloguj się jednym z kont testowych (hasło do wszystkich: `haslo123`):
+**alice@example.com**, **bob@example.com**, **carol@example.com** – albo załóż własne przez „Zaloguj".
+
+### Zatrzymanie
+
+`Ctrl + C` w obu terminalach.
+
+### Alternatywnie – backend w Dockerze
+
+Sam backend można odpalić bez instalowania Node, jednym poleceniem:
 
 ```bash
 cd backend
 docker compose up --build
 ```
-
-Konta testowe (po `npm run seed`), hasło do wszystkich `haslo123`:
-alice@example.com, bob@example.com, carol@example.com.
 
 ## Endpointy
 
