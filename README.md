@@ -1,227 +1,148 @@
-# Serwis Aukcyjny — REST API + React
+# Projekt – system aukcyjny (REST API)
 
-Praca zaliczeniowa z przedmiotu **Tworzenie usług sieciowych REST**.
+Projekt zaliczeniowy na przedmiot *Tworzenie usług sieciowych REST*.
 
-Rozproszony system aukcji internetowych: użytkownicy rejestrują się, wystawiają przedmioty,
-przeglądają aukcje i licytują. Frontend komunikuje się z systemem **wyłącznie przez REST API** —
-nigdy bezpośrednio z bazą danych.
+Aplikacja to prosty serwis aukcji internetowych. Można założyć konto, wystawić przedmiot
+na licytację, przeglądać aukcje innych i składać oferty. Backend udostępnia REST API,
+a frontend (React) korzysta tylko z tego API – nigdzie nie łączy się sam z bazą danych.
 
-Cały projekt znajduje się w tym katalogu:
+## Użyte technologie
+
+Backend napisałem w Node.js z Express. Dane trzymam w bazie SQLite – skorzystałem
+z wbudowanego modułu `node:sqlite`, żeby nie instalować dodatkowych paczek (próbowałem
+najpierw `better-sqlite3`, ale miałem problemy z kompilacją na Windowsie).
+
+- logowanie: JWT (token w nagłówku `Authorization: Bearer ...`), hasła hashowane bcryptem
+- walidacja danych wejściowych: express-validator
+- dokumentacja API: Swagger (OpenAPI) pod `/api-docs`
+- logi: winston + morgan
+
+Frontend to React + Vite, routing na react-router-dom.
+
+## Struktura projektu
+
+Wszystko jest w katalogu `react/`:
 
 ```
 react/
-├── backend/    REST API (Node.js + Express + SQLite)
-└── frontend/   interfejs (React + Vite)
+├── backend/    – REST API (Node + Express + SQLite)
+└── frontend/   – aplikacja w React
 ```
 
-## Spis treści
-- [Architektura](#architektura)
-- [Stos technologiczny](#stos-technologiczny)
-- [Model danych (ERD)](#model-danych-erd)
-- [Uruchomienie](#uruchomienie)
-- [Opis endpointów](#opis-endpointów)
-- [Reguły biznesowe](#reguły-biznesowe)
-- [Testy](#testy)
-- [Realizacja wymagań](#realizacja-wymagań)
-
-## Architektura
-
-Backend zbudowany jest w **architekturze warstwowej** z wyraźnym rozdzieleniem
-odpowiedzialności (Controller → Service → Repository → Model):
+Backend rozbiłem na warstwy, żeby nie trzymać wszystkiego w jednym pliku:
 
 ```
-HTTP (klient: React / Swagger)
-        │
-        ▼
-┌──────────────────────────────────────────────┐
-│  Routes        — definicja tras + middleware   │
-│  Middleware    — JWT, walidacja, obsługa błędów│
-│  Controllers   — odbiór żądania, kody HTTP     │  warstwa prezentacji
-├──────────────────────────────────────────────┤
-│  Services      — LOGIKA BIZNESOWA              │  warstwa domeny
-├──────────────────────────────────────────────┤
-│  Repositories  — zapytania SQL                 │  warstwa danych
-│  Database      — SQLite (node:sqlite)          │
-└──────────────────────────────────────────────┘
-        ▲
-        │  DTO — mapowanie rekord ↔ reprezentacja API (camelCase, bez haseł)
+backend/src/
+├── routes/         – ścieżki (np. /auctions)
+├── controllers/    – odbierają request, zwracają odpowiedź z kodem HTTP
+├── services/       – logika biznesowa (np. czy oferta jest wyższa od aktualnej)
+├── repositories/   – zapytania SQL do bazy
+├── dto/            – zamiana rekordu z bazy na to, co zwraca API (bez hasła!)
+├── middleware/     – autoryzacja JWT, walidacja, obsługa błędów
+├── validators/     – reguły walidacji dla poszczególnych tras
+├── config/         – baza, logger, konfiguracja, definicja Swaggera
+├── app.js          – konfiguracja Express
+├── server.js       – uruchomienie serwera
+└── seed.js         – wrzucenie przykładowych danych do bazy
 ```
 
-- **Controller** nie wie nic o SQL; **Repository** nie zna reguł biznesowych;
-  **Service** spina logikę. Każda warstwa zależy tylko od warstwy poniżej.
-- **DTO** gwarantują, że `password_hash` nigdy nie opuszcza serwera, a API zwraca `camelCase`.
-- Błędy biznesowe sygnalizowane są wyjątkiem `AppError(statusCode, message)`, który
-  globalny `errorHandler` mapuje na jednolitą odpowiedź JSON.
+Chodziło o to, żeby controller nie wiedział nic o SQL, a repository nie zajmowało się
+regułami aukcji – każda warstwa robi swoje.
 
-```
-backend/
-├── src/
-│   ├── config/        env, logger (winston), database (SQLite), openapi (Swagger)
-│   ├── routes/        authRoutes, userRoutes, auctionRoutes
-│   ├── controllers/   authController, userController, auctionController
-│   ├── services/      authService, userService, auctionService, bidService
-│   ├── repositories/  userRepository, auctionRepository, bidRepository
-│   ├── dto/           mapowanie na reprezentację API
-│   ├── middleware/    authenticate (JWT), validate, errorHandler
-│   ├── validators/    reguły express-validator
-│   ├── utils/         AppError, asyncHandler
-│   ├── app.js         konfiguracja Express
-│   ├── server.js      punkt wejścia
-│   └── seed.js        dane przykładowe
-└── tests/             testy integracyjne (Jest + supertest)
+## Baza danych
 
-frontend/
-└── src/pages/         Aukcje, Szczegóły+licytacja, Wystaw, Logowanie
-```
+Trzy tabele:
 
-## Stos technologiczny
+- **users** – id, username (unikalny), email (unikalny), hash hasła
+- **auctions** – tytuł, opis, kategoria, cena wywoławcza, aktualna cena, data startu i końca,
+  owner_id (kto wystawił)
+- **bids** – auction_id, bidder_id, kwota, data – czyli historia ofert
 
-| Warstwa     | Technologia                                             |
-|-------------|---------------------------------------------------------|
-| Backend     | Node.js 22+, Express                                     |
-| Baza danych | SQLite przez wbudowany `node:sqlite` (zero natywnych zależności) |
-| Autoryzacja | JWT (`jsonwebtoken`) + hashowanie haseł (`bcryptjs`)    |
-| Walidacja   | `express-validator`                                     |
-| Dokumentacja| OpenAPI 3.0 + Swagger UI                                |
-| Logowanie   | `winston` + `morgan`                                     |
-| Testy       | Jest + supertest                                        |
-| Frontend    | React 18, React Router, Vite                            |
-| Konteneryzacja | Docker + docker-compose                              |
+Powiązania: aukcja należy do użytkownika (owner_id), oferta należy do aukcji i do
+użytkownika. Ustawiłem `ON DELETE CASCADE`, więc jak usunę użytkownika, to znikają też
+jego aukcje i oferty.
 
-## Model danych (ERD)
+Statusu aukcji (aktywna / zakończona / zaplanowana) nie trzymam w bazie – wyliczam go
+na podstawie dat i aktualnego czasu.
 
-```mermaid
-erDiagram
-    USERS ||--o{ AUCTIONS : "wystawia (owner_id)"
-    USERS ||--o{ BIDS     : "składa (bidder_id)"
-    AUCTIONS ||--o{ BIDS  : "ma oferty (auction_id)"
+(Diagram ERD jest w sprawozdaniu / dokumentacji.)
 
-    USERS {
-      int    id PK
-      string username "UNIQUE"
-      string email    "UNIQUE"
-      string password_hash
-      string created_at
-    }
-    AUCTIONS {
-      int    id PK
-      string title
-      string description
-      string category
-      real   starting_price
-      real   current_price
-      string start_date
-      string end_date
-      int    owner_id FK
-      string created_at
-    }
-    BIDS {
-      int    id PK
-      int    auction_id FK
-      int    bidder_id FK
-      real   amount
-      string created_at
-    }
-```
+## Jak uruchomić
 
-Relacje z `ON DELETE CASCADE`: usunięcie użytkownika usuwa jego aukcje i oferty;
-usunięcie aukcji usuwa jej oferty. `status` aukcji (`scheduled`/`active`/`ended`)
-jest **wyliczany** z dat względem czasu bieżącego, nie przechowywany.
+Potrzebny Node w wersji co najmniej 22 (przez `node:sqlite`).
 
-## Uruchomienie
+Backend:
 
-### Wariant A — lokalnie (Node 22+)
-
-**Backend:**
 ```bash
 cd backend
-cp .env.example .env          # (Windows: copy .env.example .env)
+copy .env.example .env       # na Windowsie; na Linux/Mac: cp .env.example .env
 npm install
-npm run seed                  # opcjonalnie: dane przykładowe + konta testowe
-npm start                     # http://localhost:3000  (Swagger: /api-docs)
+npm run seed                 # opcjonalnie – wrzuca przykładowe aukcje i konta
+npm start
 ```
 
-**Frontend** (w drugim terminalu):
+Backend stoi na http://localhost:3000, Swagger pod http://localhost:3000/api-docs.
+
+Frontend (w drugim oknie terminala):
+
 ```bash
 cd frontend
 npm install
-npm run dev                   # http://localhost:5173
+npm run dev
 ```
 
-Vite proxuje `/api/*` na backend `:3000`, więc frontend nie wymaga konfiguracji CORS w dev.
+Frontend stoi na http://localhost:5173. Vite przekierowuje zapytania z `/api` na backend,
+więc nie trzeba kombinować z CORS-em.
 
-### Wariant B — Docker (sam backend)
+Można też odpalić sam backend w Dockerze:
 
 ```bash
 cd backend
-docker compose up --build     # API na http://localhost:3000
+docker compose up --build
 ```
 
-Konta testowe po `npm run seed`: `alice@example.com` / `bob@example.com` / `carol@example.com`
-(hasło: `haslo123`).
+Konta testowe (po `npm run seed`), hasło do wszystkich `haslo123`:
+alice@example.com, bob@example.com, carol@example.com.
 
-## Opis endpointów
+## Endpointy
 
-Pełna, interaktywna dokumentacja: **`http://localhost:3000/api-docs`** (Swagger UI),
-specyfikacja maszynowa: `http://localhost:3000/openapi.json`.
+Pełną listę z opisami i możliwością testowania mam w Swaggerze (`/api-docs`). W skrócie:
 
-### Auth
-| Metoda | Ścieżka          | Opis                          | Auth |
-|--------|------------------|-------------------------------|------|
-| POST   | `/auth/register` | Rejestracja, zwraca JWT       | —    |
-| POST   | `/auth/login`    | Logowanie, zwraca JWT         | —    |
+Użytkownicy / logowanie:
+- `POST /auth/register` – rejestracja, w odpowiedzi token
+- `POST /auth/login` – logowanie, w odpowiedzi token
+- `POST /users` – dodanie użytkownika (to samo co rejestracja)
+- `GET /users` – lista użytkowników
+- `GET /users/:id` – jeden użytkownik
+- `PUT /users/:id` – edycja (tylko swojego konta)
+- `DELETE /users/:id` – usunięcie (tylko swojego konta)
 
-### Użytkownicy
-| Metoda | Ścieżka       | Opis                              | Auth |
-|--------|---------------|-----------------------------------|------|
-| POST   | `/users`      | Dodanie użytkownika (alias rejestracji) | — |
-| GET    | `/users`      | Lista użytkowników (paginacja)    | —    |
-| GET    | `/users/:id`  | Pobranie użytkownika              | —    |
-| PUT    | `/users/:id`  | Edycja (tylko właściciel konta)   | JWT  |
-| DELETE | `/users/:id`  | Usunięcie (tylko właściciel konta)| JWT  |
+Aukcje:
+- `GET /auctions` – lista, można filtrować i sortować (patrz niżej)
+- `GET /auctions/:id` – jedna aukcja
+- `POST /auctions` – wystawienie przedmiotu (trzeba być zalogowanym)
+- `PUT /auctions/:id` – edycja (tylko swojej aukcji)
+- `DELETE /auctions/:id` – usunięcie (tylko swojej aukcji)
 
-### Aukcje
-| Metoda | Ścieżka          | Opis                                            | Auth |
-|--------|------------------|-------------------------------------------------|------|
-| GET    | `/auctions`      | Lista (filtrowanie, sortowanie, paginacja)      | —    |
-| GET    | `/auctions/:id`  | Pobranie aukcji                                 | —    |
-| POST   | `/auctions`      | Wystawienie przedmiotu                           | JWT  |
-| PUT    | `/auctions/:id`  | Edycja (tylko właściciel aukcji)                | JWT  |
-| DELETE | `/auctions/:id`  | Usunięcie (tylko właściciel aukcji)             | JWT  |
+Licytacja:
+- `POST /auctions/:id/bids` – złożenie oferty (trzeba być zalogowanym)
+- `GET /auctions/:id/bids` – historia ofert danej aukcji
 
-Parametry `GET /auctions`: `page`, `limit`, `category`, `status` (`active`/`ended`/`scheduled`),
-`sortBy` (`created_at`/`end_date`/`current_price`/`title`), `order` (`asc`/`desc`).
+Do `GET /auctions` można dodać parametry: `page`, `limit`, `category`,
+`status` (active/ended/scheduled), `sortBy` (created_at/end_date/current_price/title)
+oraz `order` (asc/desc).
 
-### Licytacja
-| Metoda | Ścieżka               | Opis                          | Auth |
-|--------|-----------------------|-------------------------------|------|
-| POST   | `/auctions/:id/bids`  | Złożenie oferty               | JWT  |
-| GET    | `/auctions/:id/bids`  | Historia ofert aukcji         | —    |
+Kody odpowiedzi jakie zwracam: 200, 201, 204, 400 (błąd walidacji albo złamana reguła),
+401 (brak/zły token), 403 (brak uprawnień), 404 (nie ma takiego zasobu), 409 (np. zajęty email).
 
-Kody HTTP: `200`, `201`, `204`, `400` (walidacja/reguła biznesowa), `401` (brak/niepoprawny token),
-`403` (brak uprawnień), `404` (brak zasobu), `409` (konflikt unikalności), `500`.
+## Reguły licytacji
 
-### Przykład (cURL)
-```bash
-# 1. logowanie -> token
-TOKEN=$(curl -s -X POST localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"bob@example.com","password":"haslo123"}' | jq -r .token)
+Najważniejsza część logiki, czyli co sprawdzam przy składaniu oferty:
 
-# 2. licytacja
-curl -X POST localhost:3000/auctions/1/bids \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"amount":650}'
-```
-
-## Reguły biznesowe
-
-- Oferta musi być **wyższa** niż aktualna cena aukcji (inaczej `400`).
-- Nie można licytować **przed startem** ani **po zakończeniu** aukcji (`400`).
-- Właściciel **nie może licytować** własnej aukcji (`403`).
-- Edytować/usuwać aukcję lub konto może **tylko właściciel** (`403`).
-- Złożona oferta podnosi `current_price` i trafia do **historii ofert**.
-- Hasła przechowywane są jako hash bcrypt; API nigdy nie zwraca hasła.
+- oferta musi być wyższa niż aktualna cena, inaczej 400
+- nie można licytować przed startem ani po końcu aukcji
+- nie można licytować własnej aukcji
+- po przyjęciu oferty aktualizuję cenę aukcji i dopisuję ofertę do historii
 
 ## Testy
 
@@ -230,23 +151,13 @@ cd backend
 npm test
 ```
 
-15 testów integracyjnych (Jest + supertest) na bazie w pamięci (`:memory:`) — pokrywają
-CRUD, walidację, autoryzację oraz wszystkie reguły licytacji.
+Napisałem testy w Jest + supertest (15 sztuk). Lecą na bazie w pamięci, więc nie ruszają
+prawdziwych danych. Sprawdzają CRUD, walidację, logowanie i wszystkie reguły licytacji.
 
-## Realizacja wymagań
+## Co dodatkowo zrobiłem (na dodatkowe punkty)
 
-| Wymaganie | Realizacja |
-|-----------|------------|
-| REST API, poprawne metody HTTP i kody | Express, kody 2xx/4xx/5xx |
-| Architektura warstwowa | Controller → Service → Repository → Model |
-| Trwałe przechowywanie | SQLite (`node:sqlite`) |
-| Walidacja danych | `express-validator` + middleware `validate` |
-| Obsługa wyjątków | `AppError` + globalny `errorHandler` |
-| DTO | `src/dto/index.js` |
-| Dokumentacja API | Swagger UI / OpenAPI 3.0 |
-| Interfejs użytkownika | React (komunikacja tylko przez REST) |
-| **(+)** Autoryzacja JWT | `jsonwebtoken` + middleware `authenticate` |
-| **(+)** Paginacja / filtrowanie / sortowanie | `GET /auctions` |
-| **(+)** Konteneryzacja | Dockerfile + docker-compose |
-| **(+)** Testy jednostkowe | Jest + supertest |
-| **(+)** Logowanie operacji | winston + morgan |
+- autoryzacja JWT
+- paginacja, filtrowanie i sortowanie aukcji
+- Docker (docker-compose)
+- testy
+- logowanie operacji do pliku i konsoli
